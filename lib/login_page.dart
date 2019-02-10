@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'authentication.dart';
 import 'home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 enum FormMode { LOGIN, SIGNUP }
 
@@ -10,8 +12,8 @@ class LoginPage extends StatefulWidget {
   	LoginPage({this.auth, this.onSignedIn});
 	final BaseAuth auth;
 	final VoidCallback onSignedIn;
+	final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  
   	@override
   	_LoginPageState createState() => _LoginPageState();
 }
@@ -130,6 +132,7 @@ class _LoginPageState extends State<LoginPage> {
 			onPressed: () {},
    		);
 	} 
+
 	Widget _showErrorMessage() {
 		if (_errorMessage.length > 0 && _errorMessage != null) {
 		return new Text(
@@ -222,13 +225,14 @@ class _LoginPageState extends State<LoginPage> {
 			);
   		} return Container(height: 0.0, width: 0.0,);
 	}
+
 	@override
 	Widget build(BuildContext context) {
   		return new Scaffold(
 			body: Stack(
 				children: <Widget>[
 				_showBody(),
-				_showCircularProgress(),
+				//_showCircularProgress(),
 				],
 			));
 	}
@@ -247,13 +251,10 @@ class _LoginPageState extends State<LoginPage> {
 		_formKey.currentState.reset();
 		_errorMessage = "";
 
-
-
 		setState(() {
 			_formMode = FormMode.LOGIN;
 		});
 	}
-
 
 _validateAndSubmit() async {
 	setState(() {
@@ -265,13 +266,13 @@ _validateAndSubmit() async {
 		String userId = "";
 		try {
 			if (_formMode == FormMode.LOGIN) {
-				userId = await widget.auth.signIn(_email, _password);
-				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: widget.auth.getCurrentUser())));
+				FirebaseUser user = await widget._auth.signInWithEmailAndPassword(email: _email, password: _password);
+				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
 
 				print('Signed in: $userId');
 			} else {
-				userId = await widget.auth.signUp(_email, _password);
-				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: widget.auth.getCurrentUser())));
+				FirebaseUser user = await widget._auth.createUserWithEmailAndPassword(email: _email, password: _password);
+				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
 
 				print('Signed up user: $userId');
 			}
@@ -280,11 +281,10 @@ _validateAndSubmit() async {
 			}
 		} catch (e) {
 			print('Error: $e');
-		
-		setState(() {
-			_isLoading = false;
-			_errorMessage = e.message;
-		});
+			setState(() {
+				_isLoading = false;
+				_errorMessage = e.message;
+			});
 		}
 	}
 }

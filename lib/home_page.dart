@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'authentication.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -10,18 +11,13 @@ class HomePage extends StatefulWidget {
 	final BaseAuth auth;
 	final VoidCallback onSignedOut;
 	final String userId;
-
 	final FirebaseUser user;
-
-
 	
 	@override
 	_HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-
-	
 
 	@override
 	Widget build(BuildContext context) {
@@ -30,10 +26,10 @@ class _HomePageState extends State<HomePage> {
 				child: Container(
 					child: RaisedButton(
 						color: Colors.yellow,
-						child: Text(text),
+						child: Text("Logged in as: " + widget.user.email),
 						onPressed: (){
 							setState(() {
-							  text = text + "1";
+							  //Log out
 							});
 						} ,
 					),
