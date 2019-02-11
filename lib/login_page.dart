@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'authentication.dart';
 import 'home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'user.dart';
+
 
 
 enum FormMode { LOGIN, SIGNUP }
@@ -13,6 +16,7 @@ class LoginPage extends StatefulWidget {
 	final BaseAuth auth;
 	final VoidCallback onSignedIn;
 	final FirebaseAuth _auth = FirebaseAuth.instance;
+	final ref = FirebaseDatabase.instance.reference();
 
   	@override
   	_LoginPageState createState() => _LoginPageState();
@@ -256,38 +260,39 @@ class _LoginPageState extends State<LoginPage> {
 		});
 	}
 
-_validateAndSubmit() async {
-	setState(() {
-		_errorMessage = "";
-		_isLoading = true;
-	});
+	_validateAndSubmit() async {
+		setState(() {
+			_errorMessage = "";
+			_isLoading = true;
+		});
 
-	if (_validateAndSave()) {
-		String userId = "";
-		try {
-			if (_formMode == FormMode.LOGIN) {
-				FirebaseUser user = await widget._auth.signInWithEmailAndPassword(email: _email, password: _password);
-				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
+		if (_validateAndSave()) {
+			String userId = "";
+			try {
+				if (_formMode == FormMode.LOGIN) {
+					FirebaseUser user = await widget._auth.signInWithEmailAndPassword(email: _email, password: _password);
+					Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
 
-				print('Signed in: $userId');
-			} else {
-				FirebaseUser user = await widget._auth.createUserWithEmailAndPassword(email: _email, password: _password);
-				Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
-
-				print('Signed up user: $userId');
+					print('Signed in: $userId');
+				} else {
+					FirebaseUser user = await widget._auth.createUserWithEmailAndPassword(email: _email, password: _password);
+					Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user: user)));
+				
+					widget.ref.push().set("{\"users\": [" + user.uid + "]}");
+					print('Signed up user: $userId');
+				}
+				if (userId.length > 0 && userId != null) {
+					widget.onSignedIn();
+				}
+			} catch (e) {
+				print('Error: $e');
+				setState(() {
+					_isLoading = false;
+					_errorMessage = e.message;
+				});
 			}
-			if (userId.length > 0 && userId != null) {
-				widget.onSignedIn();
-			}
-		} catch (e) {
-			print('Error: $e');
-			setState(() {
-				_isLoading = false;
-				_errorMessage = e.message;
-			});
 		}
 	}
-}
 }
 class MyBehavior extends ScrollBehavior {
   @override
